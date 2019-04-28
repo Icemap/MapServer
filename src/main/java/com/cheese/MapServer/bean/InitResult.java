@@ -5,6 +5,7 @@ public class InitResult
     private Boolean success;
     private String type;
     private Integer level;
+    private Object errorList;
 
     public Boolean getSuccess()
     {
@@ -34,5 +35,13 @@ public class InitResult
     public void setLevel(Integer level)
     {
         this.level = level;
+    }
+
+    public Object getErrorList() {
+        return errorList;
+    }
+
+    public void setErrorList(Object errorList) {
+        this.errorList = errorList;
     }
 }

@@ -1,6 +1,7 @@
 package com.cheese.MapServer.service;
 
 import com.cheese.MapServer.bean.MapConfig;
+import com.cheese.MapServer.bean.ThreadReqParamInfo;
 import com.cheese.MapServer.utils.BackgroundType;
 import com.cheese.MapServer.utils.FileUtils;
 import com.cheese.MapServer.utils.InitUtils;
@@ -12,6 +13,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -65,13 +67,13 @@ public class InitService
         if(!create.exists())create.mkdir();
     }
 
-    public Boolean getLevelPic(BackgroundType type, Integer level, Double left,
+    public List<ThreadReqParamInfo> getLevelPic(BackgroundType type, Integer level, Double left,
                                Double right, Double top, Double bottom)
     {
-        InitUtils.getLevelPic(type, level, left, right, top, bottom);
+        List<ThreadReqParamInfo> errorList = InitUtils.getLevelPic(type, level, left, right, top, bottom);
         addConfig(type, level, left, right, top, bottom);
 
-        return true;
+        return errorList;
     }
 
     public void addConfig(BackgroundType type, Integer level, Double left,

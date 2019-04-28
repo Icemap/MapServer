@@ -2,13 +2,21 @@ package com.cheese.MapServer.utils;
 
 import com.cheese.MapServer.bean.LatLngInfo;
 import com.cheese.MapServer.bean.LevelInfo;
+import com.cheese.MapServer.bean.ThreadReqParamInfo;
 import com.google.gson.Gson;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.UnaryOperator;
 
 public class InitUtils
 {
@@ -27,42 +35,44 @@ public class InitUtils
     private static String TianDiTu_Cover_Url = "http://t1.tianditu.cn/DataServer?T=cva_w&X={x}&Y={y}&L={z}";
 
 
-    public static Boolean getLevelPic(BackgroundType type, Integer level, Double left,
+    public static List<ThreadReqParamInfo> getLevelPic(BackgroundType type, Integer level, Double left,
                                       Double right, Double top, Double bottom)
     {
         LevelInfo levelInfo = getLevelInfo(level, left, right, top, bottom);
 
         // 开多线程请求图片
-        Vector<Thread> threads = new Vector<>();
-        for(int x = levelInfo.getxL() ; x <= levelInfo.getxR() ; x ++)
-        {
-            for(int y = levelInfo.getyT(); y <= levelInfo.getyB() ; y ++)
-            {
+        Vector<Runnable> runnableVector = new Vector<>();
+        AtomicReference<List<ThreadReqParamInfo>> errorList = new AtomicReference<>();
+        errorList.set(new ArrayList<>());
+
+        // 看自己以前的代码真的辣眼睛。。。
+        ExecutorService executorService = Executors.newFixedThreadPool(50);
+        for(int x = levelInfo.getxL() ; x <= levelInfo.getxR() ; x ++) {
+            for(int y = levelInfo.getyT(); y <= levelInfo.getyB() ; y ++) {
                 final int fX = x;
                 final int fY = y;
+                Runnable getPicRunnable = () -> {
+                    if (!getPic(type, fX, fY, levelInfo.getZ())) {
+                        errorList.getAndUpdate(threadReqParamInfos -> {
+                            threadReqParamInfos.add(new ThreadReqParamInfo(type, fX, fY, levelInfo.getZ()));
+                            return threadReqParamInfos;
+                        });
+                    }
+                };
 
-                Thread threadGetPic = new Thread(
-                        () -> getPic(type, fX, fY, levelInfo.getZ()));
-
-                threads.add(threadGetPic);
-                threadGetPic.start();
+                runnableVector.add(getPicRunnable);
+                executorService.submit(getPicRunnable);
             }
         }
 
-        // 等待所有线程执行完毕
-        for (Thread perThread : threads)
-        {
-            try
-            {
-                perThread.join();
-            }
-            catch (InterruptedException e)
-            {
-                e.printStackTrace();
-            }
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
-        return true;
+        return errorList.get();
     }
 
     public static LevelInfo getLevelInfo(Integer level, Double left,
@@ -108,9 +118,8 @@ public class InitUtils
         catch (IOException e)
         {
             e.printStackTrace();
+            return false;
         }
-
-        return false;
     }
 
     private static String buildUrl(Integer x, Integer y, Integer z, BackgroundType type)
