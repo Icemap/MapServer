@@ -41,7 +41,6 @@ public class InitUtils
         LevelInfo levelInfo = getLevelInfo(level, left, right, top, bottom);
 
         // 开多线程请求图片
-        Vector<Runnable> runnableVector = new Vector<>();
         AtomicReference<List<ThreadReqParamInfo>> errorList = new AtomicReference<>();
         errorList.set(new ArrayList<>());
 
@@ -60,7 +59,6 @@ public class InitUtils
                     }
                 };
 
-                runnableVector.add(getPicRunnable);
                 executorService.submit(getPicRunnable);
             }
         }
