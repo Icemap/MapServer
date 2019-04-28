@@ -1,0 +1,8 @@
+server:
+  port: 2018
+
+map-server:
+  init-dirs:  map, map/google, map/google/satellite, map/google/image, map/google/terrain,
+              map/amap, map/amap/satellite, map/amap/image, map/amap/cover,
+              map/tianditu, map/tianditu/satellite, map/tianditu/image, map/tianditu/cover
+  config-file: map/map.config.json

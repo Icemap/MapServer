@@ -6,6 +6,7 @@ import com.cheese.MapServer.utils.BackgroundType;
 import com.cheese.MapServer.utils.FileUtils;
 import com.cheese.MapServer.utils.InitUtils;
 import com.google.gson.Gson;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -19,52 +20,20 @@ import java.util.Map;
 @Service
 public class InitService
 {
+    @Value("#{'${map-server.init-dirs}'.split(',')}")
+    public List<String> initCreateDirs;
+
+    @Value("${map-server.config-file}")
+    public String configFilePath;
+
     @PostConstruct
-    public void init()
-    {
-        createDir();
-    }
-
-    private void createDir()
-    {
-        File create = new File("map");
-        if(!create.exists())create.mkdir();
-
-        create = new File("map/google");
-        if(!create.exists())create.mkdir();
-
-        create = new File("map/google/satellite");
-        if(!create.exists())create.mkdir();
-
-        create = new File("map/google/image");
-        if(!create.exists())create.mkdir();
-
-        create = new File("map/google/terrain");
-        if(!create.exists())create.mkdir();
-
-        create = new File("map/amap");
-        if(!create.exists())create.mkdir();
-
-        create = new File("map/amap/satellite");
-        if(!create.exists())create.mkdir();
-
-        create = new File("map/amap/image");
-        if(!create.exists())create.mkdir();
-
-        create = new File("map/amap/cover");
-        if(!create.exists())create.mkdir();
-
-        create = new File("map/tianditu");
-        if(!create.exists())create.mkdir();
-
-        create = new File("map/tianditu/satellite");
-        if(!create.exists())create.mkdir();
-
-        create = new File("map/tianditu/image");
-        if(!create.exists())create.mkdir();
-
-        create = new File("map/tianditu/cover");
-        if(!create.exists())create.mkdir();
+    public void init() {
+        for (String dirPath : initCreateDirs) {
+            File create = new File(dirPath.trim());
+            if(!create.exists()) {
+                create.mkdir();
+            }
+        }
     }
 
     public List<ThreadReqParamInfo> getLevelPic(BackgroundType type, Integer level, Double left,
@@ -81,10 +50,10 @@ public class InitService
     {
         try
         {
-            File configFile = new File("map/map.config.json");
+            File configFile = new File(configFilePath);
             MapConfig mapConfig = new MapConfig();
             if(configFile.exists())
-                mapConfig = new Gson().fromJson(FileUtils.readFileByUtf8("map/map.config.json"),
+                mapConfig = new Gson().fromJson(FileUtils.readFileByUtf8(configFilePath),
                         MapConfig.class);
 
             MapConfig.PicArea area = new MapConfig.PicArea();
